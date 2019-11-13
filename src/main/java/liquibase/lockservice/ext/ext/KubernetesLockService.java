@@ -13,7 +13,8 @@ import java.util.StringTokenizer;
 
 public class KubernetesLockService extends StandardLockService {
 
-    private static final Log LOG = org.apache.commons.logging.LogFactory.getLog(KubernetesLockService.class);
+    // private static final Log LOG =
+    // org.apache.commons.logging.LogFactory.getLog(KubernetesLockService.class);
 
     @Override
     public int getPriority() {
@@ -28,29 +29,28 @@ public class KubernetesLockService extends StandardLockService {
     @Override
     public void waitForLock() throws LockException {
         try {
-            String lockedBy = ExecutorService.getInstance().getExecutor(database).queryForObject(new SelectFromDatabaseChangeLogLockStatement("LOCKEDBY"), String.class);
-            LOG.trace("Database locked by: "+lockedBy);
-            StringTokenizer tok = new StringTokenizer(lockedBy,":");
-            if(tok.countTokens() == 2){
+            String lockedBy = ExecutorService.getInstance().getExecutor(database)
+                    .queryForObject(new SelectFromDatabaseChangeLogLockStatement("LOCKEDBY"), String.class);
+            // log..trace("Database locked by: "+lockedBy);
+            StringTokenizer tok = new StringTokenizer(lockedBy, ":");
+            if (tok.countTokens() == 2) {
                 String podNamespace = tok.nextToken();
                 String podName = tok.nextToken();
-                if(KubernetesConnector.getInstance().isCurrentPod(podNamespace, podName)){
-                    LOG.debug("Lock created by the same pod, release lock");
+                if (KubernetesConnector.getInstance().isCurrentPod(podNamespace, podName)) {
+                    // log..debug("Lock created by the same pod, release lock");
                     releaseLock();
                 }
                 Boolean lockHolderPodActive = KubernetesConnector.getInstance().isPodActive(podNamespace, podName);
-                if(lockHolderPodActive != null && !lockHolderPodActive){
-                    LOG.debug("Lock created by an inactive pod, release lock");
+                if (lockHolderPodActive != null && !lockHolderPodActive) {
+                    // log..debug("Lock created by an inactive pod, release lock");
                     releaseLock();
                 }
             } else {
-                LOG.debug("Can't parse LOCKEDBY field: "+lockedBy);
+                // log..debug("Can't parse LOCKEDBY field: "+lockedBy);
             }
         } catch (DatabaseException e) {
-            LOG.error("Can't read the LOCKEDBY field from databasechangeloglock", e);
+            // log..error("Can't read the LOCKEDBY field from databasechangeloglock", e);
         }
         super.waitForLock();
     }
 }
-
-
